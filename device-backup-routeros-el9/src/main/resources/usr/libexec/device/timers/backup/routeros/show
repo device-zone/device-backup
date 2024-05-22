@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+OPTIONS="--show name --fqdn name --show-flags disabled --show-table name,host,local-owner,frequency,backup-files --flag X --polar disabled --polar backup-files --required --user local-owner --select-base /usr/libexec/device/timers/backup/routeros/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+

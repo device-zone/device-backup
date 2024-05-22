@@ -1,0 +1,5 @@
+if [ $1 = 0 ]; then
+  /usr/bin/systemctl stop backup-rsync-autodiscovery.service
+  /usr/bin/systemctl disable backup-rsync-autodiscovery.service
+fi
+

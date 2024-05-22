@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+OPTIONS="--show name --fqdn name --show-flags disabled --show-table name,host,frequency --flag X --polar disabled --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host --select-base /usr/libexec/device/timers/backup/libvirt/frequency.txt --select frequency"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+

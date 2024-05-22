@@ -1,0 +1,15 @@
+# systemd service for managing all backup libvirt timers.
+
+[Unit]
+Description=Backup Libvirt Timer - %i
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/libexec/device-timer/backup-libvirt start %i
+ExecReload=/bin/bash /usr/libexec/device-timer/backup-libvirt reload %i
+ExecStop=/bin/bash /usr/libexec/device-timer/backup-libvirt stop %i
+RemainAfterExit=on
+
+[Install]
+WantedBy=multi-user.target
+

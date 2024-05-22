@@ -1,0 +1,14 @@
+# systemd service for managing all backup rsync timers.
+
+[Unit]
+Description=Backup Rsync Timers Autodiscovery
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/libexec/device-timer/backup-rsync start
+ExecReload=/bin/bash /usr/libexec/device-timer/backup-rsync reload
+RemainAfterExit=on
+
+[Install]
+WantedBy=multi-user.target
+

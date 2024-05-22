@@ -1,0 +1,299 @@
+#!/bin/bash -x
+
+#
+# Backup RouterOS Timers
+# ======================
+#
+# This script autogenerates the backup routeros config.
+
+set -e
+umask 0027
+
+exec 2> >(logger -t ${0})
+
+#
+# Handle the cleanup
+# ------------------
+cleanup_before_exit () {
+  if [ -d "${tmpdir}" ]; then
+    rm -rf "${tmpdir}"
+  fi
+}
+# be in a temporay workspace (this works on linux and macosx)
+tmpdir=`mktemp -d 2>/dev/null || mktemp -d -t 'tmpdir'`
+# trap catches the exit signal and runs the specified function
+trap cleanup_before_exit EXIT
+# be in our directory
+cd "${tmpdir}"
+
+
+run_backup() {
+
+request="${1}"
+instance="${2}"
+
+#
+# Run backup
+
+if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "restart"; then
+
+  logger -t backup-routeros@${instance} "${request}ing backup routeros..."
+
+  install -m 700 -d /run/backup-routeros
+
+  line="/etc/device/timers/backup/routeros/${instance}"
+
+  if test -f "$line/host.d/hostname.txt"; then
+    fqdn="$(head -n 1 $line/host.d/hostname.txt)"
+  else
+    logger -t backup-routeros@${instance} "no hostname: backup routeros skipped."
+    exit 1
+  fi
+
+  if test -f "$line/host.d/remote-owner.txt"; then
+    remoteowner="$(head -n 1 $line/host.d/remote-owner.txt)"
+  else
+    logger -t backup-routeros@${instance} "no remote owner: backup routeros skipped."
+    exit 1
+  fi
+
+  if test -f "$line/local-owner.txt"; then
+    localowner="$(head -n 1 $line/local-owner.txt)"
+    base="$(getent passwd ${localowner} | cut -d ":" -f6)"
+    localgroup="$(id -gn ${localowner})"
+  else
+    logger -t backup-routeros@${instance} "no local owner: backup routeros skipped."
+    exit 1
+  fi
+
+  source=/
+  target=disk
+
+  if test -f "$line/frequency.txt"; then
+    frequency="$(head -n 1 $line/frequency.txt)"
+  else
+    logger -t backup-routeros@${instance} "no frequency: backup routeros skipped."
+    exit 1
+  fi
+
+  if test -f "$line/host.d/retain.txt"; then
+    retain="$(head -n 1 $line/host.d/retain.txt)"
+  else
+    retain="7"
+  fi
+
+  if test -f "$line/host.d/ssh-proxy.txt"; then
+    sshproxy="-A -J $(head -n 1 $line/host.d/ssh-proxy.txt)"
+  else
+    sshproxy=""
+  fi
+
+  if test -f "$line/backup-files.bin"; then
+    backupfiles="true"
+  else
+    backupfiles=""
+  fi
+
+  # prepare the initial path if it does not exist
+  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}"
+  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/routeros"
+  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/routeros/latest"
+  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/routeros/.progress"
+  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/routeros/.progress/${target}"
+
+  if test -e "${base}/${fqdn}/routeros/latest"; then
+    created=$(stat --printf="%W" "${base}/${fqdn}/routeros/latest")
+    archive=${base}/${fqdn}/routeros/$(date --date=@"${created}" "+%Y-%m-%d")/
+  fi
+
+  # set up ssh agent
+  SSHAGENT="/usr/sbin/runuser -u ${localowner} -- /usr/bin/ssh-agent"
+  SSHADD="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh-add"
+  eval `${SSHAGENT} -s`
+  function cleanup {
+    /bin/kill $SSH_AGENT_PID
+  }
+  trap cleanup EXIT
+  ${SSHADD}
+
+  # set up scp
+  SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh"
+  SCP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/scp"
+  OPTIONS="-r -p"
+  PROXY="${sshproxy}"
+
+  # insufficient permission for this when read only
+  if test -n "${backupfiles}"; then
+    if ${SSH} ${PROXY} ${remoteowner}@${fqdn} system backup save name=config; then
+
+      logger -t backup-routeros@${instance} "routeros config backup successfully triggered."
+
+    else
+      logger -t backup-routeros@${instance} "routeros config backup could not be triggered: backup routeros skipped."
+      exit 1
+
+    fi
+  fi
+
+  # existing transfer in progress, previously interrupted?
+  if test -e "${base}/${fqdn}/routeros/.progress/${target}"; then
+
+    logger -t backup-routeros@${instance} "Resume transfer: ${SCP} ${PROXY} ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}/"
+
+    # existing transfer in progress - continue sync in place
+    if test -n "${backupfiles}"; then
+      ${SCP} ${PROXY} ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}
+    fi
+
+  # existing data, but new transfer starting?
+  elif test -e "${base}/${fqdn}/routeros/latest/${target}" -a ! -e "${base}/${fqdn}/routeros/.progress/${target}"; then
+
+    logger -t backup-routeros@${instance} "Update transfer: ${SCP} ${PROXY} ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/routeros/.progress/${target}"
+
+    # existing data - make a copy and then sync in place
+    cp -a --strip-trailing-slashes --reflink=always "${base}/${fqdn}/routeros/latest/${target}" "${base}/${fqdn}/routeros/.progress/"
+    if test -n "${backupfiles}"; then
+      ${SCP} ${PROXY} ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}
+    fi
+
+  # no existing data, no transfer in progress, copy sparse from scratch
+  else
+
+    logger -t backup-routeros@${instance} "Inital transfer: ${SCP} ${PROXY} ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}"
+
+    # first time copy - user whole file
+    if test -n "${backupfiles}"; then
+      ${SCP} ${PROXY} ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}
+    fi
+
+  fi
+
+  # save export
+  ${SSH} ${PROXY} ${remoteowner}@${fqdn} export > "${base}/${fqdn}/routeros/.progress/.export.txt"
+  install -C -T "${base}/${fqdn}/routeros/.progress/.export.txt" "${base}/${fqdn}/routeros/.progress/export.txt"
+  rm -f "${base}/${fqdn}/routeros/.progress/.export.txt"
+
+  # make sure we stay sparse
+  find "${base}/${fqdn}/routeros/.progress" -type f -print0 | xargs --no-run-if-empty --null -L1 fallocate -d
+
+  # save history? only do this once per period
+  if test -z "${archive}" -o -d "${archive}"; then
+    # no history for now
+    mv "${base}/${fqdn}/routeros/latest" ${base}/${fqdn}/routeros/remove
+    mv "${base}/${fqdn}/routeros/.progress" "${base}/${fqdn}/routeros/latest"
+    rm -rf "${base}/${fqdn}/routeros/remove"
+  else
+    mv "${base}/${fqdn}/routeros/latest" "${archive}"
+    mv "${base}/${fqdn}/routeros/.progress" "${base}/${fqdn}/routeros/latest"
+  fi
+
+  # clean up the archive
+  find "${base}/${fqdn}/routeros/" -mindepth 1 -maxdepth 1 -type d -name "*-*-*" | sort -r | tail -n +$((${retain}+1)) | xargs -L1 rm -rf
+
+  logger -t backup-routeros@${instance} "${request}ed backup routeros."
+
+elif test "${request}" == "stop"; then
+
+  logger -t backup-routeros@${instance} "stopped backup routeros."
+
+fi
+
+
+
+}
+
+#
+# What to do?
+# -----------
+
+request="${1}"
+instance="${2}"
+
+if test -n "${instance}"; then
+  run_backup "${1}" "${2}"
+  exit 0
+fi
+
+
+
+#
+# Add/remove backup
+
+find /etc/device/timers/backup/routeros/ -mindepth 1 -maxdepth 1 -type l | \
+while read line; do
+
+  target=$(readlink -f "$line")
+
+  if test ! -f "$line/name.txt"; then
+    continue;
+  fi
+  instance="$(head $line/name.txt)"
+  uuid=$(basename $target)
+
+  if test ! -f "$line/frequency.txt"; then
+    continue;
+  fi
+  frequency="$(head $line/frequency.txt)"
+
+  # remove old instances
+  if test -f "$line/removed"; then
+
+    logger -t backup-routeros-timer "removing backup routeros ${instance} (${uuid})..."
+
+    systemctl disable "backup-routeros-${frequency}@${instance}.timer"
+    systemctl stop "backup-routeros-${frequency}@${instance}.timer"
+
+    logger -t backup-routeros-timer "removed backup routeros ${instance} (${uuid})."
+
+    # remove folder
+    rm -f "${target}"/*
+    rmdir "${target}"
+    rm -f "${line}"
+
+  # add new instances
+  elif test -f "$line/added"; then
+
+    logger -t backup-routeros-timer "creating backup routeros ${instance} (${uuid})..."
+
+    if test ! -f "$line/disabled.bin"; then
+
+      systemctl enable "backup-routeros-${frequency}@${instance}.timer"
+      systemctl start "backup-routeros-${frequency}@${instance}.timer"
+
+    fi
+
+    logger -t backup-routeros-timer "created backup routeros ${uuid}."
+
+    rm -f "$line/added"
+
+  # update instances
+  elif test -f "$line/updated"; then
+
+    logger -t backup-routeros-timer "updating backup routeros ${instance} (${uuid})..."
+
+    cat /usr/libexec/device/timers/backup/routeros/frequency.txt | \
+    while read f; do
+
+      if systemctl is-enabled "backup-routeros-${f}@${instance}.timer"; then
+        systemctl disable "backup-routeros-${f}@${instance}.timer"
+        systemctl stop "backup-routeros-${f}@${instance}.timer"
+      fi
+
+    done
+
+    if test ! -f "$line/disabled.bin"; then
+
+      systemctl enable "backup-routeros-${frequency}@${instance}.timer"
+      systemctl reload-or-restart "backup-routeros-${frequency}@${instance}.timer"
+
+    fi
+
+    logger -t backup-routeros-timer "updated backup routeros ${instance} (${uuid})."
+
+    rm -f "$line/updated"
+
+  fi
+
+done
+
+

@@ -1,0 +1,13 @@
+# systemd service for managing all backup libvirt timers.
+
+[Unit]
+Description=Backup Libvirt Monthly Timer - %i
+
+[Timer]
+OnCalendar=* *-*-01 01:00:00
+Persistent=true
+Unit=backup-libvirt@%i.service
+
+[Install]
+WantedBy=timers.target
+

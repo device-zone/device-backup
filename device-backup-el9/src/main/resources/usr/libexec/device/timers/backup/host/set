@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+OPTIONS="--rename name --fqdn name --integer retain --address-addrspec ssh-proxy --required --fqdn hostname --hostname remote-owner"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+

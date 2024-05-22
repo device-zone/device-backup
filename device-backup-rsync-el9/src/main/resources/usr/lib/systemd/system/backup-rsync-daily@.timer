@@ -1,0 +1,13 @@
+# systemd service for managing all backup rsync timers.
+
+[Unit]
+Description=Backup Rsync Daily Timer - %i
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+Unit=backup-rsync@%i.service
+
+[Install]
+WantedBy=timers.target
+

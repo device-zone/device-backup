@@ -1,0 +1,12 @@
+if [ $1 = 1 ]; then
+
+  # rsync needs to run ssh
+  setsebool -P rsync_client 1
+
+  # ssh via rsync needs to see keys
+  setsebool -P rsync_full_access 1
+
+  # Register the service
+  /usr/bin/systemctl enable backup-routeros-autodiscovery.service
+fi
+

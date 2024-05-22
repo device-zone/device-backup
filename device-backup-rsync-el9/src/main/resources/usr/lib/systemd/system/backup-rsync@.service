@@ -1,0 +1,16 @@
+# systemd service for managing all backup rsync timers.
+
+[Unit]
+Description=Backup Rsync Timer - %i
+
+[Service]
+Type=notify
+ExecStart=/bin/bash /usr/libexec/device-timer/backup-rsync start %i
+ExecReload=/bin/bash /usr/libexec/device-timer/backup-rsync reload %i
+ExecStop=/bin/bash /usr/libexec/device-timer/backup-rsync stop %i
+Restart=on-failure
+RestartSec=600
+
+[Install]
+WantedBy=multi-user.target
+

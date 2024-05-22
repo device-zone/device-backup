@@ -1,0 +1,16 @@
+# systemd service for managing all backup routeros timers.
+
+[Unit]
+Description=Backup RouterOS Timer - %i
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/libexec/device-timer/backup-routeros start %i
+ExecReload=/bin/bash /usr/libexec/device-timer/backup-routeros reload %i
+ExecStop=/bin/bash /usr/libexec/device-timer/backup-routeros stop %i
+Restart=on-failure
+RestartSec=600
+
+[Install]
+WantedBy=multi-user.target
+

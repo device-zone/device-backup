@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+OPTIONS="--add name --fqdn name --polar disabled --polar backup-files --required --user local-owner --select-base /usr/libexec/device/timers/backup/routeros/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+  /usr/bin/sudo /usr/bin/systemctl try-reload-or-restart backup-routeros-autodiscovery.service
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+
