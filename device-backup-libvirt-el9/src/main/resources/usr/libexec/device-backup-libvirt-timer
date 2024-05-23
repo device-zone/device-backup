@@ -117,6 +117,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   ${SSHADD}
 
   # set up rsync
+  CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
   SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh ${sshproxy}"
   RSYNC="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/rsync"
   OPTIONS="-avz --no-specials --progress --delete-before --one-file-system --links --fake-super --chmod=D2750,F640"
@@ -140,7 +141,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     logger -t backup-libvirt@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
 
     # existing data - make a copy and then sync in place
-    cp -a --strip-trailing-slashes --reflink=always "${base}/${fqdn}/libvirt/latest/${target}" "${base}/${fqdn}/libvirt/.progress/"
+    ${CP} -a "${base}/${fqdn}/libvirt/latest/${target}" "${base}/${fqdn}/libvirt/.progress/"
     if test -n "${backupfiles}"; then
       ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
     fi

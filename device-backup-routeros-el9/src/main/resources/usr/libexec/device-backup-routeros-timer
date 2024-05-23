@@ -117,6 +117,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   ${SSHADD}
 
   # set up scp
+  CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
   SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh"
   SCP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/scp"
   OPTIONS="-r -p"
@@ -151,7 +152,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     logger -t backup-routeros@${instance} "Update transfer: ${SCP} ${PROXY} ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/routeros/.progress/${target}"
 
     # existing data - make a copy and then sync in place
-    cp -a --strip-trailing-slashes --reflink=always "${base}/${fqdn}/routeros/latest/${target}" "${base}/${fqdn}/routeros/.progress/"
+    #cp -a --strip-trailing-slashes --reflink=always "${base}/${fqdn}/routeros/latest/${target}" "${base}/${fqdn}/routeros/.progress/"
     if test -n "${backupfiles}"; then
       ${SCP} ${PROXY} ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}: ${base}/${fqdn}/routeros/.progress/${target}
     fi

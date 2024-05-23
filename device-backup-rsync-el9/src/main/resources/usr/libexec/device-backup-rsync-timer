@@ -126,6 +126,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   ${SSHADD}
 
   # set up rsync
+  CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
   SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh ${sshproxy}"
   RSYNC="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/rsync"
   OPTIONS="-avz --no-specials --progress --delete-before --one-file-system --links --fake-super --chmod=D2750,F640"
@@ -146,6 +147,10 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     logger -t backup-rsync@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/rsync/.progress/${target}/"
 
     # existing transfer in progress - continue sync in place
+    if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
+      ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
+    fi
+
     ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}
 
   # existing data, but new transfer starting?
@@ -154,7 +159,10 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     logger -t backup-rsync@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
 
     # existing data - make a copy and then sync in place
-    cp -a --strip-trailing-slashes --reflink=always "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
+    if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
+      ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
+    fi
+
     ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}
 
   # no existing data, no transfer in progress, copy sparse from scratch
@@ -173,9 +181,9 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # save history? only do this once per period
   if test -z "${archive}" -o -d "${archive}/${target}"; then
     # no history for now
-    mv "${base}/${fqdn}/rsync/latest/${target}" ${base}/${fqdn}/rsync/remove
+    mv --backup=numbered "${base}/${fqdn}/rsync/latest/${target}" ${base}/${fqdn}/rsync/.remove
     mv "${base}/${fqdn}/rsync/.progress/${target}" "${base}/${fqdn}/rsync/latest/${target}"
-    rm -rf "${base}/${fqdn}/rsync/remove"
+    rm -rf "${base}/${fqdn}/rsync/.remove"
   else
     /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${archive}"
     mv "${base}/${fqdn}/rsync/latest/${target}" "${archive}/${target}"
