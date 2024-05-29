@@ -3,7 +3,7 @@
 set -e
 umask 0002
 
-OPTIONS="--add name --fqdn name --integer retain --address-addrspec ssh-proxy --required --fqdn hostname --hostname remote-owner"
+OPTIONS="--add name --fqdn name --integer retain --port port --address-addrspec ssh-proxy --required --fqdn hostname --hostname remote-owner"
 
 if [ "$1" == "--" ]; then
 

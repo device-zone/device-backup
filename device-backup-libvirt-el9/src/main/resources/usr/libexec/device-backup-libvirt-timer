@@ -50,6 +50,12 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     exit 1
   fi
 
+  if test -f "$line/host.d/port.txt"; then
+    port="$(head -n 1 $line/host.d/port.txt)"
+  else
+    port="22"
+  fi
+
   if test -f "$line/host.d/remote-owner.txt"; then
     remoteowner="$(head -n 1 $line/host.d/remote-owner.txt)"
   else
@@ -118,7 +124,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
 
   # set up rsync
   CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
-  SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh ${sshproxy}"
+  SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh ${sshproxy} -p ${port}"
   RSYNC="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/rsync"
   OPTIONS="-avz --no-specials --progress --delete-before --one-file-system --links --fake-super --chmod=D2750,F640"
   FIRST="--sparse --whole-file --partial --block-size=131072"
@@ -128,32 +134,32 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # existing transfer in progress, previously interrupted?
   if test -e "${base}/${fqdn}/libvirt/.progress/${target}"; then
 
-    logger -t backup-libvirt@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/libvirt/.progress/${target}/"
+    logger -t backup-libvirt@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/libvirt/.progress/${target}/"
 
     # existing transfer in progress - continue sync in place
     if test -n "${backupfiles}"; then
-      ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
+      ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
     fi
 
   # existing data, but new transfer starting?
   elif test -e "${base}/${fqdn}/libvirt/latest/${target}" -a ! -e "${base}/${fqdn}/libvirt/.progress/${target}"; then
 
-    logger -t backup-libvirt@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
+    logger -t backup-libvirt@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
 
     # existing data - make a copy and then sync in place
     ${CP} -a "${base}/${fqdn}/libvirt/latest/${target}" "${base}/${fqdn}/libvirt/.progress/"
     if test -n "${backupfiles}"; then
-      ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
+      ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
     fi
 
   # no existing data, no transfer in progress, copy sparse from scratch
   else
 
-    logger -t backup-libvirt@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy}\" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
+    logger -t backup-libvirt@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
 
     # first time copy - user whole file
     if test -n "${backupfiles}"; then
-      ${RSYNC} -e "/usr/bin/ssh ${sshproxy}" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
+      ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}
     fi
 
   fi

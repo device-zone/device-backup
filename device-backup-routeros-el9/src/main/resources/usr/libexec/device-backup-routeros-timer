@@ -50,6 +50,12 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     exit 1
   fi
 
+  if test -f "$line/host.d/port.txt"; then
+    port="$(head -n 1 $line/host.d/port.txt)"
+  else
+    port="22"
+  fi
+
   if test -f "$line/host.d/remote-owner.txt"; then
     remoteowner="$(head -n 1 $line/host.d/remote-owner.txt)"
   else
@@ -118,7 +124,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
 
   # set up scp
   CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
-  SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh"
+  SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh -p ${port}"
   SCP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/scp"
   OPTIONS="-r -p"
   PROXY="${sshproxy}"
