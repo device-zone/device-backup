@@ -11,21 +11,6 @@ umask 0027
 
 exec 2> >(logger -t ${0})
 
-#
-# Handle the cleanup
-# ------------------
-cleanup_before_exit () {
-  if [ -d "${tmpdir}" ]; then
-    rm -rf "${tmpdir}"
-  fi
-}
-# be in a temporay workspace (this works on linux and macosx)
-tmpdir=`mktemp -d 2>/dev/null || mktemp -d -t 'tmpdir'`
-# trap catches the exit signal and runs the specified function
-trap cleanup_before_exit EXIT
-# be in our directory
-cd "${tmpdir}"
-
 
 run_backup() {
 
