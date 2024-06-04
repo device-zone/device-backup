@@ -3,7 +3,7 @@
 set -e
 umask 0002
 
-OPTIONS="--show name --fqdn name --show-flags disabled --show-table name,host,frequency --flag X --polar disabled --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host --select-base /usr/libexec/device/timers/backup/libvirt/frequency.txt --select frequency"
+OPTIONS="--show name --fqdn name --show-flags disabled --show-table name,host,local-owner,frequency --flag X --polar disabled --user local-owner --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host --select-base /usr/libexec/device/timers/backup/libvirt/frequency.txt --select frequency"
 
 if [ "$1" == "--" ]; then
 
