@@ -143,7 +143,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
       ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
     fi
 
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
   # existing data, but new transfer starting?
   elif test -e "${base}/${fqdn}/rsync/latest/${target}" -a ! -e "${base}/${fqdn}/rsync/.progress/${target}"; then
@@ -155,7 +155,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
       ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
     fi
 
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
   # no existing data, no transfer in progress, copy sparse from scratch
   else
@@ -163,8 +163,13 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     logger -t backup-rsync@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
 
     # first time copy - user whole file
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
+  fi
+
+  if test "${ret}" != 24 -a "${ret}" != 0; then
+    logger -t backup-rsync@${instance} "Error: rsync failed with code ${ret}"
+    exit ${ret}
   fi
 
   # make sure we stay sparse
