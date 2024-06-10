@@ -173,7 +173,9 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   fi
 
   # make sure we stay sparse
-  find "${base}/${fqdn}/rsync/.progress/${target}" -type f -print0 | xargs --no-run-if-empty --null -L1 fallocate -d
+  if test -f "$line/sparse.bin"; then
+    find "${base}/${fqdn}/rsync/.progress/${target}" -type f -print0 | xargs --no-run-if-empty --null -L1 fallocate -d
+  fi
 
   # save history? only do this once per period
   if test -z "${archive}" -o -d "${archive}/${target}"; then
