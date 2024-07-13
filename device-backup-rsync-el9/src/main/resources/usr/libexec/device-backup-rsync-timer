@@ -96,11 +96,22 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     sshproxy=""
   fi
 
+  # until further notice
+  ret=0
+
   # prepare the initial path if it does not exist
-  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}"
-  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync"
-  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync/latest"
-  /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync/.progress"
+  if test ! -e "${base}/${fqdn}"; then
+    /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}"
+  fi
+  if test ! -e "${base}/${fqdn}/rsync"; then
+    /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync"
+  fi
+  if test ! -e "${base}/${fqdn}/rsync/latest"; then
+    /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync/latest"
+  fi
+  if test ! -e "${base}/${fqdn}/rsync/.progress"; then
+    /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${base}/${fqdn}/rsync/.progress"
+  fi
 
   if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
     created=$(stat --printf="%W" "${base}/${fqdn}/rsync/latest/${target}")
