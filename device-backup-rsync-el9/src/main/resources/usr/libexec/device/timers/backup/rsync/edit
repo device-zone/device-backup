@@ -1,0 +1,36 @@
+#!/bin/sh
+  
+set -e
+umask 0002
+
+OPTIONS="--add name --fqdn name --polar disabled --polar sparse --url-path filter --required --user local-owner --url-path-absolute source --hostname target --select-base /usr/libexec/device/timers/backup/rsync/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+
+if [ "$1" == "--" ]; then
+
+  instance=$(basename "$2")
+
+  if [ "$#" -ne 5 ]; then
+    echo "The name and parameter are required"
+  elif [ ! -L "$instance" ]; then
+    echo "The name '$instance' does not exist"
+  elif [ ! "includes" = "$4" ]; then
+    echo "The parameter '$4' does not exist"
+  else
+
+    /usr/bin/nano --restricted "/etc/device/timers/backup/rsync/$instance/includes.txt"
+
+    /usr/bin/sudo /usr/bin/systemctl try-reload-or-restart backup-rsync-autodiscovery.service
+
+  fi
+
+elif [ "$1" == "-c" ]; then
+
+  if [ "$#" -eq 2 ]; then
+    find /etc/device/timers/backup/rsync/ -mindepth 1 -maxdepth 1 -type l -printf '-%f\n'
+  elif  [ "$#" -eq 4 ]; then
+    echo "-includes"
+  fi
+
+fi
+
+

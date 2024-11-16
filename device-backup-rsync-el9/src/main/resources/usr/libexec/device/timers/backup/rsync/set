@@ -3,7 +3,7 @@
 set -e
 umask 0002
 
-OPTIONS="--rename name --fqdn name --polar disabled --polar sparse --required --user local-owner --url-path-absolute source --hostname target --select-base /usr/libexec/device/timers/backup/rsync/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+OPTIONS="--rename name --fqdn name --polar disabled --polar sparse --text includes --required --user local-owner --url-path-absolute source --hostname target --select-base /usr/libexec/device/timers/backup/rsync/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
 
 if [ "$1" == "--" ]; then
 

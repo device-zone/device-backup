@@ -161,6 +161,9 @@
                   <location>target/classes/usr/libexec/device/timers/backup/rsync/add</location>
                 </source>
                 <source>
+                  <location>target/classes/usr/libexec/device/timers/backup/rsync/edit</location>
+                </source>
+                <source>
                   <location>target/classes/usr/libexec/device/timers/backup/rsync/remove</location>
                 </source>
                 <source>
@@ -174,7 +177,7 @@
             <mapping>
               <directory>/usr/libexec/device/timers/backup/rsync</directory>
               <directoryIncluded>false</directoryIncluded>
-              <filemode>755</filemode>
+              <filemode>644</filemode>
               <username>root</username>
               <groupname>root</groupname>
               <sources>
@@ -194,7 +197,8 @@
           </preremoveScriptlet>
           <requires>
             <require>device-backup</require>
-            <require>rsync</require>
+	    <require>rsync</require>
+	    <require>nano</require>
           </requires>
         </configuration>
       </plugin>

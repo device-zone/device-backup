@@ -96,6 +96,12 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     sshproxy=""
   fi
 
+  if test 0 -ne $(grep -Ev "^#|^[[:space:]]*$" "$line/includes.txt" | wc -l); then
+    FILTER="--include-from=$line/includes.txt --exclude='*'"
+  else
+    FILTER=""
+  fi
+
   # until further notice
   ret=0
 
@@ -147,34 +153,34 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # existing transfer in progress, previously interrupted?
   if test -e "${base}/${fqdn}/rsync/.progress/${target}"; then
 
-    logger -t backup-rsync@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/rsync/.progress/${target}/"
+    logger -t backup-rsync@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FILTER} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/rsync/.progress/${target}/"
 
     # existing transfer in progress - continue sync in place
     if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
       ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
     fi
 
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${RESUME} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
   # existing data, but new transfer starting?
   elif test -e "${base}/${fqdn}/rsync/latest/${target}" -a ! -e "${base}/${fqdn}/rsync/.progress/${target}"; then
 
-    logger -t backup-rsync@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
+    logger -t backup-rsync@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FILTER} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
 
     # existing data - make a copy and then sync in place
     if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
       ${CP} -a "${base}/${fqdn}/rsync/latest/${target}" "${base}/${fqdn}/rsync/.progress/"
     fi
 
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
   # no existing data, no transfer in progress, copy sparse from scratch
   else
 
-    logger -t backup-rsync@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
+    logger -t backup-rsync@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target}"
 
     # first time copy - user whole file
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/rsync/.progress/${target} || ret=$?
 
   fi
 
@@ -195,7 +201,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
       mv --backup=numbered "${base}/${fqdn}/rsync/latest/${target}" ${base}/${fqdn}/rsync/.remove
     fi
     mv "${base}/${fqdn}/rsync/.progress/${target}" "${base}/${fqdn}/rsync/latest/${target}"
-    rm -rf "${base}/${fqdn}/rsync/.remove"
+    rm -rf "${base}/${fqdn}/rsync/.remove" || rmdir "${base}/${fqdn}/rsync/.remove" || true
   else
     /usr/sbin/runuser -u "${localowner}" -- mkdir -p "${archive}"
     if test -e "${base}/${fqdn}/rsync/latest/${target}"; then
