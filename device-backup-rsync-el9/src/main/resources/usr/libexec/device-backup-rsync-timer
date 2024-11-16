@@ -97,7 +97,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   fi
 
   if test 0 -ne $(grep -Ev "^#|^[[:space:]]*$" "$line/includes.txt" | wc -l); then
-    FILTER="--include-from=$line/includes.txt --exclude='*'"
+    FILTER="--include-from=$line/includes.txt --exclude=*"
   else
     FILTER=""
   fi
