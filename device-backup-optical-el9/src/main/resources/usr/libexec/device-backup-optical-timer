@@ -1,0 +1,271 @@
+#!/bin/bash -x
+
+#
+# Backup Optical Timers
+# =====================
+#
+# This script autogenerates the backup optical config.
+
+set -e
+umask 0027
+
+exec 2> >(logger -t ${0})
+
+
+
+run_backup() {
+
+request="${1}"
+instance="${2}"
+
+#
+# Run backup
+
+if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "restart"; then
+
+  logger -t backup-optical@${instance} "${request}ing backup optical..."
+
+  # broken due to https://issues.redhat.com/browse/RHEL-38101
+  # systemd-notify --status "${request}ing backup optical..."
+
+  install -m 700 -d /run/backup-optical
+
+  line="/etc/device/timers/backup/optical/${instance}"
+
+  if test -L "$line/source"; then
+    source="$(readlink $line/source)"
+  else
+    logger -t backup-optical@${instance} "no source: backup optical skipped."
+    exit 1
+  fi
+
+  if test -f "$line/target.txt"; then
+    target="$(head -n 1 $line/target.txt)"
+  else
+    logger -t backup-optical@${instance} "no target: backup optical skipped."
+    exit 1
+  fi
+
+  if test -f "$line/frequency.txt"; then
+    frequency="$(head -n 1 $line/frequency.txt)"
+  else
+    logger -t backup-optical@${instance} "no frequency: backup optical skipped."
+    exit 1
+  fi
+
+  if test -f "$line/application.txt"; then
+    application="$(head -n 1 $line/application.txt)"
+  else
+    application="$(basename $source)"
+  fi
+
+  if test -f "$line/notify.txt"; then
+    notify="$(head -n 1 $line/notify.txt)"
+  else
+    notify=
+  fi
+  
+  # until further notice
+  ret=0
+
+  TMPFILE=$(mktemp)
+
+  # Options to be passed to mkisofs
+  MKISOFS_OPTS="-r -J"
+  VOLUME="${application} `date --iso-8601`"
+
+  # Sendmail
+  SENDMAIL=/usr/sbin/sendmail
+
+  if ! /usr/bin/xorrecord -toc dev=${target} 2>&1 | grep -q "Media status : is blank"; then
+
+    logger -t backup-optical@${instance} "${target} needs a blank disk inserted, skipped."
+
+    cat <<EOM > ${TMPFILE}
+To: ${notify}
+Reply-To: ${notify}
+Subject: Please insert blank DVD(s) for backup into `uname -n`
+Precedence: bulk
+
+Hi,
+
+The DVD writer ${target} in `uname -n` wants a blank
+DVD ready for backup:
+
+Regards,
+Your friendly backup script
+--
+EOM
+
+    cat ${TMPFILE} | ${SENDMAIL} -t
+    rm ${TMPFILE}
+    exit 1
+
+  fi
+
+
+  # Set up the write notification email
+  cat <<EOM > ${TMPFILE}
+To: ${notify}
+Reply-To: ${notify}
+Subject: Backup status for `uname -n` on `date --iso-8601`.
+
+Hi,
+
+We tried to write backups as follows in `uname -n`:
+
+EOM
+
+
+  # Sanity check - is the disk too big?
+  if ! nice --18 /usr/bin/growisofs -dry-run -quiet -f -Z /dev/null ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}" 2>&1 >> ${TMPFILE}; then
+    cat <<EOM >> ${TMPFILE}
+The backup directory ${source} was too full for the disk. Backups
+were NOT written.
+
+Condolences,
+Your friendly backup script
+--
+EOM
+    cat ${TMPFILE} | ${SENDMAIL} -t
+    rm ${TMPFILE}
+    exit 1
+  fi
+
+  if nice --18 /usr/bin/growisofs -quiet -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}" 2>&1 >> ${TMPFILE}; then
+    logger -t backup-optical@${instance} "${source} written successfully to ${target}."
+    echo "Backup written successfully to ${target}" >> ${TMPFILE}
+#    eject ${target}
+  else
+    logger -t backup-optical@${instance} "${source} write FAILED to ${target}."
+    echo "BACKUP FAILED - NOT written to ${target}" >> ${TMPFILE}
+    failed=true
+  fi
+
+  # Add tail end of the email
+  cat <<EOM >> ${TMPFILE}
+
+Regards,
+Your friendly backup script
+--
+EOM
+
+  # Send status email
+  cat ${TMPFILE} | sendmail -t
+  rm ${TMPFILE}
+
+  # Sanity check - did we fail? If not, we're good for another DAYS days
+  if [ ! "x${failed}" == "xtrue" ]; then
+    touch $source/.last-written
+  else
+    exit 1
+  fi
+
+
+  logger -t backup-optical@${instance} "${request}ed backup optical."
+
+elif test "${request}" == "stop"; then
+
+  logger -t backup-optical@${instance} "stopped backup optical."
+
+fi
+
+
+
+}
+
+#
+# What to do?
+# -----------
+
+request="${1}"
+instance="${2}"
+
+if test -n "${instance}"; then
+  run_backup "${1}" "${2}"
+  exit 0
+fi
+
+
+
+#
+# Add/remove backup
+
+find /etc/device/timers/backup/optical/ -mindepth 1 -maxdepth 1 -type l | \
+while read line; do
+
+  target=$(readlink -f "$line")
+
+  if test ! -f "$line/name.txt"; then
+    continue;
+  fi
+  instance="$(head $line/name.txt)"
+  uuid=$(basename $target)
+
+  if test ! -f "$line/frequency.txt"; then
+    continue;
+  fi
+  frequency="$(head $line/frequency.txt)"
+
+  # remove old instances
+  if test -f "$line/removed"; then
+
+    logger -t backup-optical-timer "removing backup optical ${instance} (${uuid})..."
+
+    systemctl disable "backup-optical-${frequency}@${instance}.timer"
+    systemctl stop "backup-optical-${frequency}@${instance}.timer"
+
+    logger -t backup-optical-timer "removed backup optical ${instance} (${uuid})."
+
+    # remove folder
+    rm -f "${target}"/*
+    rmdir "${target}"
+    rm -f "${line}"
+
+  # add new instances
+  elif test -f "$line/added"; then
+
+    logger -t backup-optical-timer "creating backup optical ${instance} (${uuid})..."
+
+    if test ! -f "$line/disabled.bin"; then
+
+      systemctl enable "backup-optical-${frequency}@${instance}.timer"
+      systemctl start "backup-optical-${frequency}@${instance}.timer"
+
+    fi
+
+    logger -t backup-optical-timer "created backup optical ${uuid}."
+
+    rm -f "$line/added"
+
+  # update instances
+  elif test -f "$line/updated"; then
+
+    logger -t backup-optical-timer "updating backup optical ${instance} (${uuid})..."
+
+    cat /usr/libexec/device/timers/backup/optical/frequency.txt | \
+    while read f; do
+
+      if systemctl is-enabled "backup-optical-${f}@${instance}.timer"; then
+        systemctl disable "backup-optical-${f}@${instance}.timer"
+        systemctl stop "backup-optical-${f}@${instance}.timer"
+      fi
+
+    done
+
+    if test ! -f "$line/disabled.bin"; then
+
+      systemctl enable "backup-optical-${frequency}@${instance}.timer"
+      systemctl reload-or-restart "backup-optical-${frequency}@${instance}.timer"
+
+    fi
+
+    logger -t backup-optical-timer "updated backup optical ${instance} (${uuid})."
+
+    rm -f "$line/updated"
+
+  fi
+
+done
+
+

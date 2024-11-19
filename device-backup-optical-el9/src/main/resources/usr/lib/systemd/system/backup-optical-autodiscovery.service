@@ -1,0 +1,14 @@
+# systemd service for managing all backup optical timers.
+
+[Unit]
+Description=Backup Optical Timers Autodiscovery
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/libexec/device-timer/backup-optical start
+ExecReload=/bin/bash /usr/libexec/device-timer/backup-optical reload
+RemainAfterExit=on
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+OPTIONS="--show name --fqdn name \
+         --polar disabled \
+	 --address-addrspec notify \
+	 --text application \
+	 --show-flags disabled --show-table name,source,target,frequency,application,notify --flag X \
+	 --required \
+         --symlink-base /var/spool/backup/optical --symlink source \
+         --select-base /usr/libexec/device/timers/backup/optical/frequency.txt --select frequency \
+         --select target"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+

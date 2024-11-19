@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+umask 0002
+
+cleanup_before_exit () {
+  if [ -f "${targets}" ]; then
+    rm -f "${targets}"
+  fi
+}
+targets=$(mktemp)
+trap cleanup_before_exit EXIT
+find /dev -group cdrom -type b > ${targets}
+
+OPTIONS="--add name --fqdn name \
+	 --polar disabled \
+	 --address-addrspec notify \
+	 --text application \
+	 --required \
+	 --symlink-base /var/spool/backup/optical --symlink source \
+	 --select-base /usr/libexec/device/timers/backup/optical/frequency.txt --select frequency \
+	 --select-base ${targets} --select target"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+  /usr/bin/sudo /usr/bin/systemctl try-reload-or-restart backup-optical-autodiscovery.service
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+

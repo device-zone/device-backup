@@ -29,6 +29,7 @@
   <modules>
     <module>device-backup-el9</module>
     <module>device-backup-libvirt-el9</module>
+    <module>device-backup-optical-el9</module>
     <module>device-backup-routeros-el9</module>
     <module>device-backup-rsync-el9</module>
   </modules>

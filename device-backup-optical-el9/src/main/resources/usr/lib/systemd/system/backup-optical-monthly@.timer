@@ -1,0 +1,15 @@
+# systemd service for managing all backup optical timers.
+
+[Unit]
+Description=Backup Optical Monthly Timer - %i
+
+[Timer]
+OnCalendar=* *-*-01 01:00:00
+Persistent=true
+RandomizedDelaySec=14400
+FixedRandomDelay=true
+Unit=backup-optical@%i.service
+
+[Install]
+WantedBy=timers.target
+
