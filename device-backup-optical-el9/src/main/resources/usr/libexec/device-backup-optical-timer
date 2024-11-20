@@ -73,6 +73,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # Options to be passed to mkisofs
   MKISOFS_OPTS="-r -J"
   VOLUME="${application} `date --iso-8601`"
+  APPLICATION="${application}"
 
   # Sendmail
   SENDMAIL=/usr/sbin/sendmail
@@ -118,7 +119,7 @@ EOM
 
 
   # Sanity check - is the disk too big?
-  if ! nice --18 /usr/bin/growisofs -dry-run -quiet -f -Z /dev/null ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}" 2>&1 >> ${TMPFILE}; then
+  if ! nice --18 /usr/bin/growisofs -dry-run -quiet -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
     cat <<EOM >> ${TMPFILE}
 The backup directory ${source} was too full for the disk. Backups
 were NOT written.
@@ -132,7 +133,7 @@ EOM
     exit 1
   fi
 
-  if nice --18 /usr/bin/growisofs -quiet -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}" 2>&1 >> ${TMPFILE}; then
+  if nice --18 /usr/bin/growisofs -quiet -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
     logger -t backup-optical@${instance} "${source} written successfully to ${target}."
     echo "Backup written successfully to ${target}" >> ${TMPFILE}
 #    eject ${target}
