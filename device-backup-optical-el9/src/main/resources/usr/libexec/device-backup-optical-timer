@@ -64,7 +64,13 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   else
     notify=
   fi
-  
+ 
+  if test -f "$line/eject.bin"; then
+    eject=yes
+  else
+    eject=no
+  fi
+
   # until further notice
   ret=0
 
@@ -154,6 +160,10 @@ EOM
   # Send status email
   cat ${TMPFILE} | sendmail -t
   rm ${TMPFILE}
+
+  if test "${eject}" = "yes"; then
+    /usr/bin/eject ${target} || true
+  fi
 
   # Sanity check - did we fail? If not, we're good for another DAYS days
   if [ ! "x${failed}" == "xtrue" ]; then

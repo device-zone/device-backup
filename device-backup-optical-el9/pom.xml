@@ -197,7 +197,8 @@
           </preremoveScriptlet>
           <requires>
             <require>device-backup</require>
-            <require>/usr/sbin/sendmail</require>
+            <require>/usr/bin/eject</require>
+	    <require>/usr/sbin/sendmail</require>
             <require>/usr/bin/growisofs</require>
 	    <require>/usr/bin/xorrecord</require>
           </requires>

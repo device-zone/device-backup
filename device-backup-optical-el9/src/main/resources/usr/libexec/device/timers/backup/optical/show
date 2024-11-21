@@ -5,9 +5,10 @@ umask 0002
 
 OPTIONS="--show name --fqdn name \
          --polar disabled \
+         --polar eject \
 	 --address-addrspec notify \
 	 --text application \
-	 --show-flags disabled --show-table name,source,target,frequency,application,notify --flag X \
+	 --show-flags disabled --show-table name,source,target,frequency,application,notify,eject --flag X \
 	 --required \
          --symlink-base /var/spool/backup/optical --symlink source \
          --select-base /usr/libexec/device/timers/backup/optical/frequency.txt --select frequency \
