@@ -172,6 +172,9 @@
                 <source>
                   <location>target/classes/usr/libexec/device/timers/backup/rsync/show</location>
                 </source>
+                <source>
+                  <location>target/classes/usr/libexec/device/timers/backup/rsync/sync</location>
+                </source>
               </sources>
             </mapping>
             <mapping>

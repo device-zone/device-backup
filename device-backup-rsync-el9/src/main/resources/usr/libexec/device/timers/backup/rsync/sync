@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+umask 0002
+
+do_sync() {
+  /usr/bin/sudo /usr/bin/systemctl restart backup-rsync@${DEVICE_NAME}.service
+}
+export -f do_sync
+
+OPTIONS="--exec name --fqdn name"
+
+if [ "$1" == "--" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} --command "/bin/bash -c do_sync" "$@"
+
+elif [ "$1" == "-c" ]; then
+
+  /usr/libexec/device-set ${OPTIONS} "$@"
+
+fi
+
