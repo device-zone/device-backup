@@ -169,12 +169,15 @@
                 <source>
                   <location>target/classes/usr/libexec/device/timers/backup/libvirt/show</location>
                 </source>
+                <source>
+                  <location>target/classes/usr/libexec/device/timers/backup/libvirt/sync</location>
+                </source>
               </sources>
             </mapping>
             <mapping>
               <directory>/usr/libexec/device/timers/backup/libvirt</directory>
               <directoryIncluded>false</directoryIncluded>
-              <filemode>755</filemode>
+              <filemode>644</filemode>
               <username>root</username>
               <groupname>root</groupname>
               <sources>
