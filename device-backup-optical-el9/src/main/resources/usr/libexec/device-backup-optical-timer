@@ -125,7 +125,7 @@ EOM
 
 
   # Sanity check - is the disk too big?
-  if ! nice --18 /usr/bin/growisofs -dry-run -quiet -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
+  if ! nice --18 /usr/bin/growisofs -dry-run -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
     cat <<EOM >> ${TMPFILE}
 The backup directory ${source} was too full for the disk. Backups
 were NOT written.
@@ -139,9 +139,9 @@ EOM
     exit 1
   fi
 
-  logger -t backup-optical@${instance} /usr/bin/growisofs -quiet -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"
+  logger -t backup-optical@${instance} /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"
 
-  if nice --18 /usr/bin/growisofs -quiet -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
+  if nice --18 /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
     logger -t backup-optical@${instance} "${source} written successfully to ${target}."
     echo "Backup written successfully to ${target}" >> ${TMPFILE}
 #    eject ${target}
