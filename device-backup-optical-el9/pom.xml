@@ -165,6 +165,9 @@
                 <source>
                   <location>target/classes/usr/libexec/device/timers/backup/optical/show</location>
                 </source>
+                <source>
+                  <location>target/classes/usr/libexec/device/timers/backup/optical/sync</location>
+                </source>
               </sources>
             </mapping>
             <mapping>
