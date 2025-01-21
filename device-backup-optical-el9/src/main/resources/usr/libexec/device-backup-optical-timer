@@ -139,7 +139,7 @@ EOM
     exit 1
   fi
 
-  logger -t backup-optical@${instance} /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"
+  logger -t backup-optical@${instance} -- /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"
 
   if nice --18 /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
     logger -t backup-optical@${instance} "${source} written successfully to ${target}."
