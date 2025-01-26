@@ -227,6 +227,9 @@ while read line; do
 
     logger -t backup-libvirt-timer "removing backup libvirt ${instance} (${uuid})..."
 
+    systemctl disable "backup-libvirt@${instance}.service"
+    systemctl stop "backup-libvirt@${instance}.service"
+
     systemctl disable "backup-libvirt-${frequency}@${instance}.timer"
     systemctl stop "backup-libvirt-${frequency}@${instance}.timer"
 

@@ -232,6 +232,9 @@ while read line; do
 
     logger -t backup-routeros-timer "removing backup routeros ${instance} (${uuid})..."
 
+    systemctl disable "backup-routeros@${instance}.service"
+    systemctl stop "backup-routeros@${instance}.service"
+
     systemctl disable "backup-routeros-${frequency}@${instance}.timer"
     systemctl stop "backup-routeros-${frequency}@${instance}.timer"
 

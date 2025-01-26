@@ -225,6 +225,9 @@ while read line; do
 
     logger -t backup-optical-timer "removing backup optical ${instance} (${uuid})..."
 
+    systemctl disable "backup-optical@${instance}.service"
+    systemctl stop "backup-optical@${instance}.service"
+
     systemctl disable "backup-optical-${frequency}@${instance}.timer"
     systemctl stop "backup-optical-${frequency}@${instance}.timer"
 

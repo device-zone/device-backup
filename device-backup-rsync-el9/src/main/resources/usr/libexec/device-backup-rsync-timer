@@ -266,6 +266,9 @@ while read line; do
 
     logger -t backup-rsync-timer "removing backup rsync ${instance} (${uuid})..."
 
+    systemctl disable "backup-rsync@${instance}.service"
+    systemctl stop "backup-rsync@${instance}.service"
+
     systemctl disable "backup-rsync-${frequency}@${instance}.timer"
     systemctl stop "backup-rsync-${frequency}@${instance}.timer"
 
