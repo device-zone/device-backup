@@ -96,7 +96,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     sshproxy=""
   fi
 
-  if test 0 -ne $(grep -Ev "^#|^[[:space:]]*$" "$line/includes.txt" | wc -l); then
+  if test -f "$line/includes.txt" -a 0 -ne $(grep -Ev "^#|^[[:space:]]*$" "$line/includes.txt" | wc -l); then
     FILTER="--include-from=$line/includes.txt --exclude=*"
   else
     FILTER=""
