@@ -9,9 +9,6 @@
 set -e
 umask 0027
 
-exec 2> >(logger -t ${0})
-
-
 
 run_backup() {
 
@@ -23,6 +20,7 @@ instance="${2}"
 
 if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "restart"; then
 
+  systemd-notify --ready --status "Starting: ${request}ing backup optical..."
   logger -t backup-optical@${instance} "${request}ing backup optical..."
 
   # broken due to https://issues.redhat.com/browse/RHEL-38101
@@ -35,6 +33,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -L "$line/source"; then
     source="$(readlink $line/source)"
   else
+    systemd-notify --status "Error: no source: backup optical skipped."
     logger -t backup-optical@${instance} "no source: backup optical skipped."
     exit 1
   fi
@@ -42,6 +41,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -f "$line/target.txt"; then
     target="$(head -n 1 $line/target.txt)"
   else
+    systemd-notify --status "Error: no target: backup optical skipped."
     logger -t backup-optical@${instance} "no target: backup optical skipped."
     exit 1
   fi
@@ -49,6 +49,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -f "$line/frequency.txt"; then
     frequency="$(head -n 1 $line/frequency.txt)"
   else
+    systemd-notify --status "Error: no frequency: backup optical skipped."
     logger -t backup-optical@${instance} "no frequency: backup optical skipped."
     exit 1
   fi
@@ -86,18 +87,19 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
 
   if ! /usr/bin/xorrecord -toc dev=${target} 2>&1 | grep -q "Media status : is blank"; then
 
+    systemd-notify --status "Warning: ${target} needs a blank disk inserted: backup optical skipped."
     logger -t backup-optical@${instance} "${target} needs a blank disk inserted, skipped."
 
     cat <<EOM > ${TMPFILE}
 To: ${notify}
 Reply-To: ${notify}
-Subject: Please insert blank DVD(s) for backup into `uname -n`
+Subject: Please insert blank Blu-ray(s) for backup into `uname -n`
 Precedence: bulk
 
 Hi,
 
-The DVD writer ${target} in `uname -n` wants a blank
-DVD ready for backup:
+The Blu-ray writer ${target} in `uname -n` wants a blank
+Blu-ray ready for backup:
 
 Regards,
 Your friendly backup script
@@ -139,13 +141,16 @@ EOM
     exit 1
   fi
 
+  systemd-notify --status "Underway: ${source} is being written to ${target}."
   logger -t backup-optical@${instance} -- /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"
 
   if nice --18 /usr/bin/growisofs -iso-level 3 -f -Z "${target}" ${MKISOFS_OPTS} -A "${APPLICATION}" -V "${VOLUME}" "${source}"; then
+    systemd-notify --status "Complete: ${source} written successfully to ${target}."
     logger -t backup-optical@${instance} "${source} written successfully to ${target}."
     echo "Backup written successfully to ${target}" >> ${TMPFILE}
 #    eject ${target}
   else
+    systemd-notify --status "Error: ${source} write FAILED to ${target}."
     logger -t backup-optical@${instance} "${source} write FAILED to ${target}."
     echo "BACKUP FAILED - NOT written to ${target}" >> ${TMPFILE}
     failed=true

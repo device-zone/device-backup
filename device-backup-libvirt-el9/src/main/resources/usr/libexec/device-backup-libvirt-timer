@@ -9,8 +9,6 @@
 set -e
 umask 0027
 
-exec 2> >(logger -t ${0})
-
 
 run_backup() {
 
@@ -22,6 +20,7 @@ instance="${2}"
 
 if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "restart"; then
 
+  systemd-notify --ready --status "Starting: ${request}ing backup libvirt..."
   logger -t backup-libvirt@${instance} "${request}ing backup libvirt..."
 
   install -m 700 -d /run/backup-libvirt
@@ -31,6 +30,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -f "$line/host.d/hostname.txt"; then
     fqdn="$(head -n 1 $line/host.d/hostname.txt)"
   else
+    systemd-notify --status "Error: no hostname: backup libvirt skipped."
     logger -t backup-libvirt@${instance} "no hostname: backup libvirt skipped."
     exit 1
   fi
@@ -44,6 +44,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -f "$line/host.d/remote-owner.txt"; then
     remoteowner="$(head -n 1 $line/host.d/remote-owner.txt)"
   else
+    systemd-notify --status "Error: no remote owner: backup libvirt skipped."
     logger -t backup-libvirt@${instance} "no remote owner: backup libvirt skipped."
     exit 1
   fi
@@ -53,6 +54,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     base="$(getent passwd ${localowner} | cut -d ":" -f6)"
     localgroup="$(id -gn ${localowner})"
   else
+    systemd-notify --status "Error: no local owner: backup libvirt skipped."
     logger -t backup-libvirt@${instance} "no local owner: backup libvirt skipped."
     exit 1
   fi
@@ -63,6 +65,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   if test -f "$line/frequency.txt"; then
     frequency="$(head -n 1 $line/frequency.txt)"
   else
+    systemd-notify --status "Error: no frequency: backup libvirt skipped."
     logger -t backup-libvirt@${instance} "no frequency: backup libvirt skipped."
     exit 1
   fi
@@ -119,6 +122,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # existing transfer in progress, previously interrupted?
   if test -e "${base}/${fqdn}/libvirt/.progress/${target}"; then
 
+    systemd-notify --status "Underway: previously interrupted libvirt..."
     logger -t backup-libvirt@${instance} "Resume transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${RESUME} ${remoteowner}@${fqdn}:${source}/ ${base}/${fqdn}/libvirt/.progress/${target}/"
 
     # existing transfer in progress - continue sync in place
@@ -129,6 +133,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # existing data, but new transfer starting?
   elif test -e "${base}/${fqdn}/libvirt/latest/${target}" -a ! -e "${base}/${fqdn}/libvirt/.progress/${target}"; then
 
+    systemd-notify --status "Underway: earlier backup libvirt...."
     logger -t backup-libvirt@${instance} "Update transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${NEXT} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
 
     # existing data - make a copy and then sync in place
@@ -140,6 +145,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # no existing data, no transfer in progress, copy sparse from scratch
   else
 
+    systemd-notify --status "Underway: initial backup libvirt...."
     logger -t backup-libvirt@${instance} "Inital transfer: ${RSYNC} -e \"/usr/bin/ssh ${sshproxy} -p ${port}\" ${OPTIONS} ${FIRST} ${remoteowner}@${fqdn}:${source} ${base}/${fqdn}/libvirt/.progress/${target}"
 
     # first time copy - user whole file
@@ -177,6 +183,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # clean up the archive
   find "${base}/${fqdn}/libvirt/" -mindepth 1 -maxdepth 1 -type d -name "*-*-*" | sort -r | tail -n +$((${retain}+1)) | xargs -L1 rm -rf
 
+  systemd-notify --status "Complete: finished ${request}ing backup libvirt."
   logger -t backup-libvirt@${instance} "${request}ed backup libvirt."
 
 elif test "${request}" == "stop"; then

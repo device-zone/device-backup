@@ -4,10 +4,10 @@
 Description=Backup Rsync Timer - %i
 
 [Service]
-Type=oneshot
-ExecStart=/bin/bash /usr/libexec/device-timer/backup-rsync start %i
-ExecReload=/bin/bash /usr/libexec/device-timer/backup-rsync reload %i
-ExecStop=/bin/bash /usr/libexec/device-timer/backup-rsync stop %i
+Type=notify
+ExecStart=/usr/libexec/device-timer/backup-rsync start %i
+ExecReload=/usr/libexec/device-timer/backup-rsync reload %i
+ExecStop=/usr/libexec/device-timer/backup-rsync stop %i
 Restart=on-failure
 RestartSec=600
 

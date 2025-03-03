@@ -4,10 +4,10 @@
 Description=Backup Libvirt Timer - %i
 
 [Service]
-Type=simple
-ExecStart=/bin/bash /usr/libexec/device-timer/backup-libvirt start %i
-ExecReload=/bin/bash /usr/libexec/device-timer/backup-libvirt reload %i
-ExecStop=/bin/bash /usr/libexec/device-timer/backup-libvirt stop %i
+Type=notify
+ExecStart=/usr/libexec/device-timer/backup-libvirt start %i
+ExecReload=/usr/libexec/device-timer/backup-libvirt reload %i
+ExecStop=/usr/libexec/device-timer/backup-libvirt stop %i
 RemainAfterExit=on
 Restart=on-failure
 RestartSec=600
