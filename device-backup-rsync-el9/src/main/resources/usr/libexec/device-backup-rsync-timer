@@ -228,7 +228,10 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   ${SSH} ${PROXY} ${remoteowner}@${fqdn} 'if test -d "${source}"; then touch "${source}/.last-backup" || true; fi'
 
   # clean up the archive
-  find "${base}/${fqdn}/rsync/" -mindepth 1 -maxdepth 1 -type d -name "*-*-*" | sort -r | tail -n +$((${retain}+1)) | xargs -L1 rm -rf
+  find "${base}/${fqdn}/rsync/" -mindepth 1 -maxdepth 2 -type d -wholename "*-*-*/${target}" | sort -r | tail -n +$((${retain}+1)) | xargs -L1 rm -rf
+
+  # remove empty directories
+  find "${base}/${fqdn}/rsync/" -mindepth 1 -maxdepth 1 -type d -name "*-*-*" -empty -delete
 
   systemd-notify --status "Complete: finished ${request}ing backup rsync."
   logger -t backup-rsync@${instance} "${request}ed backup rsync."
