@@ -137,11 +137,13 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   trap cleanup EXIT
   ${SSHADD}
 
+  # Note: rsync requires https://github.com/RsyncProject/rsync/pull/751
+
   # set up rsync
   CP="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/cp --update --one-file-system --strip-trailing-slashes --reflink=always"
   SSH="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/ssh ${sshproxy} -p ${port}"
   RSYNC="/usr/sbin/runuser -m -u ${localowner} -- /usr/bin/rsync"
-  OPTIONS="-avz --no-specials --progress --delete-before --one-file-system --links --fake-super --chmod=D2750,F640"
+  OPTIONS="-avz --no-specials --progress --delete-before --one-file-system --links --fake-super --chmod-dest=D2750,F640"
   FIRST="--sparse --whole-file --partial --block-size=131072"
   NEXT="--inplace --partial --block-size=131072"
   RESUME="--append-verify --sparse --block-size=131072"
