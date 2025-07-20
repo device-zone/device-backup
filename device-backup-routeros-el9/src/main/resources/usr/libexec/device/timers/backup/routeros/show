@@ -3,7 +3,17 @@
 set -e
 umask 0002
 
-OPTIONS="--show name --fqdn name --show-flags disabled --show-table name,host,local-owner,frequency,backup-files --flag X --polar disabled --polar backup-files --required --user local-owner --select-base /usr/libexec/device/timers/backup/routeros/frequency.txt --select frequency --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+OPTIONS="--show name \
+	 --fqdn name \
+	 --show-flags disabled,substate \
+	 --show-table name,host,local-owner,frequency,backup-files \
+	 --flag X --polar disabled \
+         --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-routeros@ --systemd-service substate \
+	 --polar backup-files \
+	 --required \
+	 --user local-owner \
+	 --select-base /usr/libexec/device/timers/backup/routeros/frequency.txt --select frequency \
+	 --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
 
 if [ "$1" == "--" ]; then
 
