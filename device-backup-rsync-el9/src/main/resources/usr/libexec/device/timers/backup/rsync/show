@@ -11,7 +11,7 @@ OPTIONS="--show name \
          --flag X --polar disabled \
          --text includes \
          --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \
-         --flag R --flag-description running --flag-match active --systemd-name name --systemd-prefix backup-rsync@ --systemd-service state \
+         --flag R --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-rsync@ --systemd-service state \
          --systemd-parameter StatusText --systemd-name name --systemd-prefix backup-rsync@ --systemd-service status \
          --required \
          --user local-owner \
