@@ -4,19 +4,20 @@ set -e
 umask 0002
 
 OPTIONS="--show name \
-	 --fqdn name \
-	 --show-flags disabled,substate \
-	 --polar sparse \
-	 --show-table name,host,local-owner,source,target,frequency,sparse \
-	 --flag X --polar disabled \
-	 --text includes \
+         --fqdn name \
+         --show-flags disabled,substate,activestate \
+         --polar sparse \
+         --show-table name,host,local-owner,source,target,frequency,sparse \
+         --flag X --polar disabled \
+         --text includes \
          --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \
-	 --required \
-	 --user local-owner \
-	 --url-path-absolute source \
-	 --hostname target \
-	 --select-base /usr/libexec/device/timers/backup/rsync/frequency.txt --select frequency \
-	 --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
+         --flag R --flag-description running --flag-match active --systemd-name name --systemd-prefix backup-rsync@ --systemd-service activestate \
+         --required \
+         --user local-owner \
+         --url-path-absolute source \
+         --hostname target \
+         --select-base /usr/libexec/device/timers/backup/rsync/frequency.txt --select frequency \
+         --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host"
 
 if [ "$1" == "--" ]; then
 

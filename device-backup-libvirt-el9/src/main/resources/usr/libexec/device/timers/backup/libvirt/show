@@ -4,14 +4,15 @@ set -e
 umask 0002
 
 OPTIONS="--show name \
-	 --fqdn name \
-	 --show-flags disabled,substate \
-	 --show-table name,host,local-owner,frequency \
-	 --flag X --polar disabled \
+         --fqdn name \
+         --show-flags disabled,substate,activestate \
+         --show-table name,host,local-owner,frequency \
+         --flag X --polar disabled \
          --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service substate \
-	 --user local-owner \
-	 --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host \
-	 --select-base /usr/libexec/device/timers/backup/libvirt/frequency.txt --select frequency"
+         --flag R --flag-description running --flag-match active --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service activestate \
+         --user local-owner \
+         --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host \
+         --select-base /usr/libexec/device/timers/backup/libvirt/frequency.txt --select frequency"
 
 if [ "$1" == "--" ]; then
 
