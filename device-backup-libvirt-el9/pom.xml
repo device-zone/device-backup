@@ -4,7 +4,7 @@
   <parent>
     <artifactId>device-backup</artifactId>
     <groupId>zone.device.platform</groupId>
-    <version>0.9.20-SNAPSHOT</version>
+    <version>0.9.20</version>
   </parent>
 
   <properties>
@@ -18,7 +18,7 @@
 
   <artifactId>device-backup-libvirt</artifactId>
   <groupId>zone.device.platform.el9</groupId>
-  <version>0.9.20-SNAPSHOT</version>
+  <version>0.9.20</version>
   <packaging>rpm</packaging>
   <name>device backup applicance libvirt module for el9</name>
   <description>Packaging for the backup appliance libvirt module for ${release.distribution}</description>
