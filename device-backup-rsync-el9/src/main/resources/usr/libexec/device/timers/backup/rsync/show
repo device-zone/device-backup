@@ -8,10 +8,10 @@ OPTIONS="--show name \
          --show-flags disabled,substate,state \
          --polar sparse \
          --show-table name,host,local-owner,source,target,frequency,sparse \
-         --flag X --polar disabled \
+         --flag ⚫ --polar disabled \
+         --flag 🔴 --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \
+         --flag 🟢 --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-rsync@ --systemd-service state \
          --text includes \
-         --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \
-         --flag R --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-rsync@ --systemd-service state \
          --systemd-parameter StatusText --systemd-name name --systemd-prefix backup-rsync@ --systemd-service status \
          --required \
          --user local-owner \

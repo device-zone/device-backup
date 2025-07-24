@@ -7,9 +7,9 @@ OPTIONS="--show name \
          --fqdn name \
          --show-flags disabled,substate,state \
          --show-table name,host,local-owner,frequency \
-         --flag X --polar disabled \
-         --flag + --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service substate \
-         --flag R --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service state \
+         --flag ⚫ --polar disabled \
+         --flag 🔴 --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service substate \
+         --flag 🟢 --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service state \
          --systemd-parameter StatusText --systemd-name name --systemd-prefix backup-libvirt@ --systemd-service status \
          --user local-owner \
          --relation-base /etc/device/timers/backup/host --relation-name name --relation-suffix .txt --relation host \
