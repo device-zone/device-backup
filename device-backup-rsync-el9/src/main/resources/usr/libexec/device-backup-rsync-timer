@@ -156,6 +156,23 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
 
   fi
 
+  # update timestamp
+  if test -f "$line/timestamp.bin"; then
+
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source}/./.timestamp ${base}/${fqdn}/rsync/.progress/${target}/ || ret=$?
+
+    if test "${ret}" != 24 -a "${ret}" != 0; then
+      systemd-notify --status "Error: rsync failed with code ${ret} for .timestamp."
+      logger -t backup-rsync@${instance} "Error: rsync failed with code ${ret} for .timestamp"
+      exit ${ret}
+    fi
+
+    if ! find "${base}/${fqdn}/rsync/.progress/${target}/.timestamp" -mmin +120 -exec false {} + 2>/dev/null; then
+      stale=yes
+    fi
+
+  fi
+
   # existing transfer in progress, previously interrupted?
   if test -e "${base}/${fqdn}/rsync/.progress/${target}"; then
 
@@ -235,7 +252,12 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # remove empty directories
   find "${base}/${fqdn}/rsync/" -mindepth 1 -maxdepth 1 -type d -name "*-*-*" -empty -delete
 
-  systemd-notify --status "Complete: finished ${request}ing backup rsync."
+  if test -n "${stale}"; then
+    systemd-notify --status "Complete: finished ${request}ing backup rsync (content stale)."
+  else
+    systemd-notify --status "Complete: finished ${request}ing backup rsync."
+  fi
+
   logger -t backup-rsync@${instance} "${request}ed backup rsync."
 
 elif test "${request}" == "stop"; then

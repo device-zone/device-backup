@@ -6,6 +6,7 @@ umask 0002
 OPTIONS="--rename name --fqdn name \
          --polar disabled \
          --polar sparse \
+         --polar timestamp \
          --text includes \
          --required \
          --user local-owner \

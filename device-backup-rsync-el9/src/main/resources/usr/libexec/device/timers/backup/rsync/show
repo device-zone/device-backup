@@ -5,14 +5,15 @@ umask 0002
 
 OPTIONS="--show name \
          --fqdn name \
-         --show-flags disabled,substate,state \
+         --show-flags disabled,substate,state,status \
          --polar sparse \
-         --show-table name,host,local-owner,source,target,frequency,sparse \
+         --polar timestamp \
+         --show-table name,host,local-owner,source,target,frequency,sparse,timestamp \
          --flag ⚫ --polar disabled \
          --flag 🔴 --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \
          --flag 🟢 --flag-description running --flag-match ^active$ --systemd-name name --systemd-prefix backup-rsync@ --systemd-service state \
+         --flag 🟡 --flag-description stale --flag-match stale --systemd-parameter StatusText --systemd-name name --systemd-prefix backup-rsync@ --systemd-service status \
          --text includes \
-         --systemd-parameter StatusText --systemd-name name --systemd-prefix backup-rsync@ --systemd-service status \
          --required \
          --user local-owner \
          --url-path-absolute source \

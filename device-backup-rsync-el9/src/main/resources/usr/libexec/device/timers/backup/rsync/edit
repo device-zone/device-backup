@@ -6,6 +6,7 @@ umask 0002
 OPTIONS="--add name --fqdn name \
          --polar disabled \
          --polar sparse \
+         --polar timestamp \
          --url-path filter \
          --required \
          --user local-owner \
