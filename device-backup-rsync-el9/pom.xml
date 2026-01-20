@@ -4,7 +4,7 @@
   <parent>
     <artifactId>device-backup</artifactId>
     <groupId>zone.device.platform</groupId>
-    <version>0.9.23-SNAPSHOT</version>
+    <version>0.9.23</version>
   </parent>
 
   <properties>
@@ -18,7 +18,7 @@
 
   <artifactId>device-backup-rsync</artifactId>
   <groupId>zone.device.platform.el9</groupId>
-  <version>0.9.23-SNAPSHOT</version>
+  <version>0.9.23</version>
   <packaging>rpm</packaging>
   <name>device backup applicance rsync module for el9</name>
   <description>Packaging for the backup appliance rsync module for ${release.distribution}</description>
