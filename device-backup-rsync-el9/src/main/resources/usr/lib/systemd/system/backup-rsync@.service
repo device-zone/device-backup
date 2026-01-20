@@ -9,7 +9,8 @@ ExecStart=/usr/libexec/device-timer/backup-rsync start %i
 ExecReload=/usr/libexec/device-timer/backup-rsync reload %i
 ExecStop=/usr/libexec/device-timer/backup-rsync stop %i
 Restart=on-failure
-RestartSec=600
+RestartSec=3600
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

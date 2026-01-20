@@ -159,7 +159,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   # update timestamp
   if test -f "$line/timestamp.bin"; then
 
-    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source}/./.timestamp ${base}/${fqdn}/rsync/.progress/${target}/ || ret=$?
+    ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source}/./.timestamp /tmp/ || ret=$?
 
     if test "${ret}" != 24 -a "${ret}" != 0; then
       systemd-notify --status "Error: rsync failed with code ${ret} for .timestamp."
@@ -167,7 +167,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
       exit ${ret}
     fi
 
-    if ! find "${base}/${fqdn}/rsync/.progress/${target}/.timestamp" -mmin +120 -exec false {} + 2>/dev/null; then
+    if ! find "/tmp/.timestamp" -mmin +120 -exec false {} + 2>/dev/null; then
       stale=yes
     fi
 
