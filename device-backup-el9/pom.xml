@@ -4,7 +4,7 @@
   <parent>
     <artifactId>device-backup</artifactId>
     <groupId>zone.device.platform</groupId>
-    <version>0.9.24</version>
+    <version>0.9.25-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -18,7 +18,7 @@
 
   <artifactId>device-backup</artifactId>
   <groupId>zone.device.platform.el9</groupId>
-  <version>0.9.24</version>
+  <version>0.9.25-SNAPSHOT</version>
   <packaging>rpm</packaging>
   <name>device backup applicance for el9</name>
   <description>Packaging for the backup appliance for ${release.distribution}</description>
