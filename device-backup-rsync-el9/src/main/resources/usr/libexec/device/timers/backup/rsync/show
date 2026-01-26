@@ -7,7 +7,7 @@ OPTIONS="--show name \
          --fqdn name \
          --show-flags disabled,substate,state,status \
          --polar sparse \
-         --polar timestamp \
+         --integer-minimum 1 --integer-maximum 2700000 --integer timestamp \
          --show-table name,host,local-owner,source,target,frequency,sparse,timestamp \
          --flag ⚫ --polar disabled \
          --flag 🔴 --flag-description retrying --flag-match auto-restart --systemd-parameter SubState --systemd-name name --systemd-prefix backup-rsync@ --systemd-service substate \

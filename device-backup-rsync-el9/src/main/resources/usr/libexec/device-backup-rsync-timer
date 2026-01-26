@@ -89,6 +89,10 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
     retain="7"
   fi
 
+  if test -f "$line/timestamp.txt"; then
+    timestamp="$(head -n 1 $line/timestamp.txt)"
+  fi
+
   # Note: jump box support is currently broken due to SELinux: https://issues.redhat.com/browse/RHEL-37655
 
   if test -f "$line/host.d/ssh-proxy.txt"; then
@@ -157,7 +161,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
   fi
 
   # update timestamp
-  if test -f "$line/timestamp.bin"; then
+  if test -n "${timestamp}"; then
 
     ${RSYNC} -e "/usr/bin/ssh ${sshproxy} -p ${port}" ${OPTIONS} ${FILTER} ${FIRST} ${remoteowner}@${fqdn}:${source}/./.timestamp /tmp/ || ret=$?
 
@@ -167,7 +171,7 @@ if test "${request}" == "start" -o "${request}" == "reload" -o "${request}" == "
       exit ${ret}
     fi
 
-    if ! find "/tmp/.timestamp" -mmin +120 -exec false {} + 2>/dev/null; then
+    if ! find "/tmp/.timestamp" -mmin +${timestamp} -exec false {} + 2>/dev/null; then
       stale=yes
     fi
 
